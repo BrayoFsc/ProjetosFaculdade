@@ -13,6 +13,7 @@ typedef struct WAVE {
   unsigned int byteRate; // Bytes per second [SampleRate * NumChannels * BitsPerSample/8]]
   unsigned int blockAlign; // Bytes per sample of ALL Channels [NumChannels * BitsPerSample/8]
   unsigned int bitsPS; // bits per sample, per channel 8- 8bits, 16- 16 bits etc
+  //[CHUNK DATA]
   unsigned char dataChunkID[4]; // Chunk Header data, DATA string or FLLR string
   unsigned int dataChunkSize; // size of all samples, NumSamples * NumChannels * BitsPerSample/8 -
                               // size of the next chunk
