@@ -14,7 +14,7 @@ typedef struct WAVE {
    //[CHUNK FMT]
    unsigned char fmtChunkID[4]; // Chunk Header fmt string with trailing null char
    unsigned int fmtChunkSize; // length of the format data
-   unsigned int audioFormat; // format type. 1-PCM, 3- IEEE float, 6 - 8bit A law, 7 - 8bit mu law
+   uint16_t audioFormat; // format type. 1-PCM, 3- IEEE float, 6 - 8bit A law, 7 - 8bit mu law
    unsigned int channels; // nº.of channels
    unsigned int sampleRate; // nº Samples per Sec || sampling rate (blocks per second)
    unsigned int byteRate; // nº Bytes per second [SampleRate * NumChannels * BitsPerSample/8]]
@@ -32,7 +32,7 @@ int main()
    FILE *wav;
    char *filesrc;
    wave audio;
-
+   uint16_t buffer2[2];
    filesrc = "2.wav";
    printf("Opening file..\n");
    wav = fopen(filesrc, "rb");
@@ -44,13 +44,27 @@ int main()
    // read RIFF parts
    int read = 0;
    read = fread(&audio.chunkID, 1, 4, wav);
-   printf("(1-4) ");
+   printf("( 1- 4) ");
    for (int i = 0; i < 4; i++) printf("%c", audio.chunkID[i]);
    printf("\n");
 
    read = fread(&audio.chunkSize, 4, 1, wav);
-   printf("(5-8) chunkSize: %u bytes %u Kb\n", audio.chunkSize, audio.chunkSize / 1024);
+   printf("( 5- 8)  Chunk Size: %u bytes %u Kb\n", audio.chunkSize, audio.chunkSize / 1024);
 
-   read = fread(audio.format, 4, 1, wav);
-   printf("(9-12) File format: %s\n", audio.format);
+   read = fread(&audio.format, 4, 1, wav);
+   printf("( 9-12) File format: %s\n", audio.format);
+   // read FMT parts
+   read = fread(&audio.fmtChunkID, 1, 4, wav);
+   printf("(13-16) FMT Chunk Header: %s\n", audio.fmtChunkID);
+
+   read = fread(&audio.fmtChunkSize, 4, 1, wav);
+   printf("(17-20) FMT CHunk Size: %u\n", audio.fmtChunkSize);
+
+   read = fread(&audio.audioFormat, 2, 1, wav);
+   printf("(21-22) Audio Format: %u\n", audio.audioFormat);
+
+   // read = fread(buffer2, 2, 1, wav);
+   // audio.channels = buffer2[0] | (buffer2[1] << 8);
+   read = fread(&audio.channels, 1, 2, wav);
+   printf("(22-23) Number of Channels: %u\n", audio.channels);
 }
