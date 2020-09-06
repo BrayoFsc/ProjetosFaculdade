@@ -33,7 +33,7 @@ int main()
    char *filesrc;
    wave audio;
    uint16_t buffer2[2];
-   filesrc = "spkr0.wav";
+   filesrc = "music.wav";
    printf("Opening file..\n");
    wav = fopen(filesrc, "rb");
    if (wav == NULL)
@@ -65,6 +65,5 @@ int main()
 
    read = fread(buffer2, 2, 1, wav);
    audio.channels = buffer2[0] | (buffer2[1]);
-   // read = fread(&audio.channels, 2, 1, wav);
    printf("(22-23) Number of Channels: %u\n", audio.channels);
 }
