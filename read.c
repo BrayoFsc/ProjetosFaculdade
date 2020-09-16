@@ -8,6 +8,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+// command line instructions
+typedef struct CLI {
+   char *input; // input file defined by -i
+   char *output; // output file defined by  -o
+   char *option; // list of various options
+} CLI;
+
 typedef struct WAVE {
    //[CHUNK RIFF]
    unsigned char chunkID[4]; // RIFF string, identify file type
@@ -27,14 +34,19 @@ typedef struct WAVE {
    uint32_t dataChunkSize; // size of all samples, NumSamples * NumChannels * BitsPerSample/8
                            // -size of the next chunk
    uint32_t samplesPC; // Number of Samples per Channel
+
+   //[AUDIO DATA]
+   uint32_t *Right; // Right Channel Samples
+   uint32_t *Left; // Left Channel Samples
 } wave;
 
-int main(int argc, char **argv)
+void waveinfo(wave audio)
 {
-   char *fileIn = NULL, *fileOut = NULL;
-   FILE *wav;
+}
+
+void commandline(CLI *cl, int argc, char **argv)
+{
    int option;
-   wave audio;
    if (argc > 1)
    {
       while ((option = getopt(argc, argv, "i:o:")) != -1)
@@ -42,28 +54,59 @@ int main(int argc, char **argv)
          switch (option)
          {
          case 'i':
-            fileIn = optarg;
+            cl->input = optarg;
             break;
 
          case 'o':
-            fileOut = optarg;
+            cl->output = optarg;
             break;
          }
       }
    }
+}
+
+void wavinfo(wave audio)
+{
+   printf("riff tag        (4 bytes): \"%.4s\"\n", audio.chunkID);
+   printf("riff size       (4 bytes): %u\n", audio.chunkSize);
+   printf("wave tag        (4 bytes): \"%.4s\"\n", audio.format);
+   printf("form tag        (4 bytes): \"%.4s\"\n", audio.fmtChunkID);
+   printf("fmt_size        (4 bytes): %u\n", audio.fmtChunkSize);
+   printf("audio_format    (2 bytes): %u\n", audio.audioFormat);
+   printf("num_channels    (2 bytes): %u\n", audio.channels);
+   printf("sample_rate     (4 bytes): %u\n", audio.sampleRate);
+   printf("byte_rate       (4 bytes): %u\n", audio.byteRate);
+   printf("block_align     (2 bytes): %u\n", audio.blockAlign);
+   printf("bits_per_sample (2 bytes): %u\n", audio.bitsPS);
+   printf("data tag        (4 bytes): \"%.4s\"\n", audio.dataChunkID);
+   printf("data size       (4 bytes): %u\n", audio.dataChunkSize);
+   printf("bytes per sample         : %u\n", audio.bitsPS / 8);
+   printf("samples per channel      : %u\n", audio.samplesPC);
+}
+int main(int argc, char **argv)
+{
+   CLI cl;
+   cl.input = NULL;
+   cl.output = NULL;
+   cl.option = NULL;
+   commandline(&cl, argc, argv);
+
+   FILE *wav;
+   wave audio;
 
    printf("Opening file..\n");
-   if (fileIn == NULL)
+   if (cl.input == NULL)
       wav = stdin;
    else
-      wav = fopen(fileIn, "rd");
+      wav = fopen(cl.input, "rd");
 
    if (wav == NULL)
    {
       printf("Error opening filen");
       exit(1);
    }
-
+   // reading file data into the struct
    fread(&audio, 1, 44, wav);
    audio.samplesPC = (audio.dataChunkSize / audio.channels / (audio.bitsPS / 8));
+   wavinfo(audio);
 }
