@@ -32,4 +32,20 @@ int main(int argc, char **argv)
    printf("flag_a = %d, flag_b = %d, value_c = %s\n", flag_a, flag_b, value_c);
 
    return 0;
+
+   printf("%.4s", audio.chunkID);
+   printf("%u", audio.chunkSize);
+   printf("%.4s", audio.format);
+   printf("%.4s", audio.fmtChunkID);
+   printf("%u", audio.fmtChunkSize);
+   printf("%u", audio.audioFormat);
+   printf("%u", audio.channels);
+   printf("%u", audio.sampleRate);
+   printf("%u", audio.byteRate);
+   printf("%u", audio.blockAlign);
+   printf("%u", audio.bitsPS);
+   printf("%.4s", audio.dataChunkID);
+   printf("%u", audio.dataChunkSize);
+   printf("%u", audio.bitsPS / 8);
+   printf("%u", audio.samplesPC);
 }

@@ -36,8 +36,8 @@ typedef struct WAVE {
    uint32_t samplesPC; // Number of Samples per Channel
 
    //[AUDIO DATA]
-   uint32_t *Right; // Right Channel Samples
-   uint32_t *Left; // Left Channel Samples
+   uint16_t *Right; // Right Channel Samples
+   uint16_t *Left; // Left Channel Samples
 } wave;
 
 void command_line(CLI *cl, int argc, char **argv)
@@ -70,6 +70,14 @@ void read_audio(wave *audio, FILE *wav)
 {
    fread(audio, 1, 44, wav);
    audio->samplesPC = (audio->dataChunkSize / audio->channels / (audio->bitsPS / 8));
+
+   audio->Right = (uint16_t *)malloc(audio->dataChunkSize);
+   audio->Left = (uint16_t *)malloc(audio->dataChunkSize);
+   for (int i = 0; i < audio->samplesPC; i++)
+   {
+      fread(&audio->Right[i], audio->bitsPS / 8, 1, wav);
+      fread(&audio->Left[i], audio->bitsPS / 8, 1, wav);
+   }
 }
 
 void wav_info(wave audio)
@@ -89,6 +97,19 @@ void wav_info(wave audio)
    printf("data size       (4 bytes): %u\n", audio.dataChunkSize);
    printf("bytes per sample         : %u\n", audio.bitsPS / 8);
    printf("samples per channel      : %u\n", audio.samplesPC);
+}
+
+void wav_play(wave audio)
+{
+   FILE *fp;
+   fp = fopen("teste.wav", "w");
+   fwrite(&audio, 1, 44, fp);
+   for (int i = 0; i < audio.samplesPC; i++)
+   {
+      fwrite(&audio.Right[i], audio.bitsPS / 8, 1, fp);
+      fwrite(&audio.Left[i], audio.bitsPS / 8, 1, fp);
+   }
+   fclose(fp);
 }
 int main(int argc, char **argv)
 {
@@ -112,5 +133,6 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_info(audio);
+   // wav_info(audio);
+   wav_play(audio);
 }
