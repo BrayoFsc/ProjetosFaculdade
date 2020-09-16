@@ -40,11 +40,7 @@ typedef struct WAVE {
    uint32_t *Left; // Left Channel Samples
 } wave;
 
-void waveinfo(wave audio)
-{
-}
-
-void commandline(CLI *cl, int argc, char **argv)
+void command_line(CLI *cl, int argc, char **argv)
 {
    int option;
    if (argc > 1)
@@ -62,10 +58,21 @@ void commandline(CLI *cl, int argc, char **argv)
             break;
          }
       }
+   } else
+   {
+      cl->input = NULL;
+      cl->output = NULL;
+      cl->option = NULL;
    }
 }
 
-void wavinfo(wave audio)
+void read_audio(wave *audio, FILE *wav)
+{
+   fread(audio, 1, 44, wav);
+   audio->samplesPC = (audio->dataChunkSize / audio->channels / (audio->bitsPS / 8));
+}
+
+void wav_info(wave audio)
 {
    printf("riff tag        (4 bytes): \"%.4s\"\n", audio.chunkID);
    printf("riff size       (4 bytes): %u\n", audio.chunkSize);
@@ -86,10 +93,7 @@ void wavinfo(wave audio)
 int main(int argc, char **argv)
 {
    CLI cl;
-   cl.input = NULL;
-   cl.output = NULL;
-   cl.option = NULL;
-   commandline(&cl, argc, argv);
+   command_line(&cl, argc, argv);
 
    FILE *wav;
    wave audio;
@@ -105,8 +109,8 @@ int main(int argc, char **argv)
       printf("Error opening filen");
       exit(1);
    }
+
    // reading file data into the struct
-   fread(&audio, 1, 44, wav);
-   audio.samplesPC = (audio.dataChunkSize / audio.channels / (audio.bitsPS / 8));
-   wavinfo(audio);
+   read_audio(&audio, wav);
+   wav_info(audio);
 }
