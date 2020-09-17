@@ -1,4 +1,4 @@
-#include <ctype.h>
+include<ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -8,12 +8,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// command line instructions
-typedef struct CLI {
+        // command line instructions
+        typedef struct CLI {
    char *input; // input file defined by -i
    char *output; // output file defined by  -o
-   char *option; // list of various options
-   int optam;
+   char *vol; // adjustment volume
 } CLI;
 
 typedef struct WAVE {
@@ -57,6 +56,8 @@ void command_line(CLI *cl, int argc, char **argv)
          case 'o':
             cl->output = optarg;
             break;
+         case 'l':
+            cl->vol = optarg;
          }
       }
    } else
@@ -87,25 +88,6 @@ void read_audio(wave *audio, FILE *wav)
          fread(&audio->Left[i], audio->bitsPS / 8, 1, wav);
       }
    }
-}
-
-void wav_info(wave audio)
-{
-   printf("riff tag        (4 bytes): \"%.4s\"\n", audio.chunkID);
-   printf("riff size       (4 bytes): %u\n", audio.chunkSize);
-   printf("wave tag        (4 bytes): \"%.4s\"\n", audio.format);
-   printf("form tag        (4 bytes): \"%.4s\"\n", audio.fmtChunkID);
-   printf("fmt_size        (4 bytes): %u\n", audio.fmtChunkSize);
-   printf("audio_format    (2 bytes): %u\n", audio.audioFormat);
-   printf("num_channels    (2 bytes): %u\n", audio.channels);
-   printf("sample_rate     (4 bytes): %u\n", audio.sampleRate);
-   printf("byte_rate       (4 bytes): %u\n", audio.byteRate);
-   printf("block_align     (2 bytes): %u\n", audio.blockAlign);
-   printf("bits_per_sample (2 bytes): %u\n", audio.bitsPS);
-   printf("data tag        (4 bytes): \"%.4s\"\n", audio.dataChunkID);
-   printf("data size       (4 bytes): %u\n", audio.dataChunkSize);
-   printf("bytes per sample         : %u\n", audio.bitsPS / 8);
-   printf("samples per channel      : %u\n", audio.samplesPC);
 }
 
 void wav_play(wave audio, CLI cl)
