@@ -60,8 +60,8 @@ void wav_play(wave audio, CLI cl)
    {
       for (int i = 0; i <= audio.samplesPC; i++)
       {
-         fwrite(&audio.Left[i], audio.bitsPS / 8, 1, output);
          fwrite(&audio.Right[i], audio.bitsPS / 8, 1, output);
+         fwrite(&audio.Left[i], audio.bitsPS / 8, 1, output);
       }
    }
    fclose(output);
@@ -93,7 +93,7 @@ void wav_norm(wave *audio)
    int16_t max;
    max = found_max(audio);
 
-   float norm;
+   double norm;
    norm = (float)INT16_MAX / max;
    if (audio->channels == 1)
       for (int i = 0; i <= audio->samplesPC; i++)

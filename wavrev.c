@@ -22,6 +22,45 @@ void command_line(CLI *cl, int argc, char **argv)
          }
       }
 }
+
+void cpysample(int16_t *audio, int16_t *copy, int tam)
+{
+   for (int i = 0; i < tam; i++)
+      copy[i] = audio[i];
+}
+
+void wav_rev(wave *audio)
+{
+   if (audio->channels == 1)
+   {
+      int16_t *rightcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+         rightcpy[i] = audio->Right[i];
+
+      for (int i = 0; i < audio->samplesPC; i++)
+         audio->Right[i] = rightcpy[audio->samplesPC - i];
+
+   } else
+   {
+      int16_t *rightcpy = NULL, *leftcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+      {
+         rightcpy[i] = audio->Right[i];
+         leftcpy[i] = audio->Left[i];
+      }
+
+      for (int i = 0; i < audio->samplesPC; i++)
+      {
+         audio->Right[i] = rightcpy[audio->samplesPC - i];
+         audio->Left[i] = leftcpy[audio->samplesPC - i];
+      }
+   }
+}
 int main(int argc, char **argv)
 {
    CLI cl;
@@ -46,7 +85,7 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_norm(&audio);
+   wav_rev(&audio);
    wav_play(audio, cl);
    fclose(wav);
 }
