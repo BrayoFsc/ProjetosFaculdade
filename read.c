@@ -12,8 +12,6 @@
 typedef struct CLI {
    char *input; // input file defined by -i
    char *output; // output file defined by  -o
-   char *option; // list of various options
-   int optam;
 } CLI;
 
 typedef struct WAVE {
@@ -45,7 +43,6 @@ void command_line(CLI *cl, int argc, char **argv)
 {
    int option;
    if (argc > 1)
-   {
       while ((option = getopt(argc, argv, "i:o:l:")) != -1)
       {
          switch (option)
@@ -59,12 +56,6 @@ void command_line(CLI *cl, int argc, char **argv)
             break;
          }
       }
-   } else
-   {
-      cl->input = NULL;
-      cl->output = NULL;
-      cl->option = NULL;
-   }
 }
 
 void read_audio(wave *audio, FILE *wav)
@@ -126,8 +117,8 @@ void wav_play(wave audio, CLI cl)
    {
       for (int i = 0; i <= audio.samplesPC; i++)
       {
-         fwrite(&audio.Right[i], audio.bitsPS / 8, 1, fp);
          fwrite(&audio.Left[i], audio.bitsPS / 8, 1, fp);
+         fwrite(&audio.Right[i], audio.bitsPS / 8, 1, fp);
       }
    }
    fclose(fp);
@@ -136,7 +127,8 @@ void wav_play(wave audio, CLI cl)
 int main(int argc, char **argv)
 {
    CLI cl;
-   cl.optam = 0;
+   cl.input = NULL;
+   cl.output = NULL;
    command_line(&cl, argc, argv);
 
    FILE *wav;

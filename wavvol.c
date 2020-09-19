@@ -1,4 +1,4 @@
-include<ctype.h>
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <inttypes.h>
@@ -8,11 +8,11 @@ include<ctype.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-        // command line instructions
-        typedef struct CLI {
+// command line instructions
+typedef struct CLI {
    char *input; // input file defined by -i
    char *output; // output file defined by  -o
-   char *vol; // adjustment volume
+   float vol; // adjustment volume
 } CLI;
 
 typedef struct WAVE {
@@ -44,7 +44,6 @@ void command_line(CLI *cl, int argc, char **argv)
 {
    int option;
    if (argc > 1)
-   {
       while ((option = getopt(argc, argv, "i:o:l:")) != -1)
       {
          switch (option)
@@ -57,15 +56,9 @@ void command_line(CLI *cl, int argc, char **argv)
             cl->output = optarg;
             break;
          case 'l':
-            cl->vol = optarg;
+            cl->vol = atof(optarg);
          }
       }
-   } else
-   {
-      cl->input = NULL;
-      cl->output = NULL;
-      cl->option = NULL;
-   }
 }
 
 void read_audio(wave *audio, FILE *wav)
@@ -92,33 +85,90 @@ void read_audio(wave *audio, FILE *wav)
 
 void wav_play(wave audio, CLI cl)
 {
-
+   FILE *output;
    if (cl.output == NULL)
       output = stdout;
    else
-   {
-      FILE *fp;
       output = fopen("teste.wav", "w");
-   }
 
-   fwrite(&audio, 1, 44, fp);
+   fwrite(&audio, 1, 44, output);
    if (audio.channels == 1)
-      fwrite(audio.Right, audio.bitsPS / 8, audio.samplesPC, fp);
+      fwrite(audio.Right, audio.bitsPS / 8, audio.samplesPC, output);
    else
    {
       for (int i = 0; i <= audio.samplesPC; i++)
       {
-         fwrite(&audio.Right[i], audio.bitsPS / 8, 1, fp);
-         fwrite(&audio.Left[i], audio.bitsPS / 8, 1, fp);
+         fwrite(&audio.Right[i], audio.bitsPS / 8, 1, output);
+         fwrite(&audio.Left[i], audio.bitsPS / 8, 1, output);
       }
    }
-   fclose(fp);
+   fclose(output);
+}
+
+void wav_vol(wave *audio, CLI cl)
+{
+   float vol;
+   if (cl.vol == 0)
+      vol = 1;
+   else
+      vol = cl.vol;
+
+   if (audio->channels == 1)
+      for (int i = 0; i <= audio->samplesPC; i++)
+         audio->Right[i] = audio->Right[i] * vol;
+   else
+   {
+      for (int i = 0; i <= audio->samplesPC; i++)
+      {
+         audio->Right[i] = audio->Right[i] * vol;
+         audio->Left[i] = audio->Left[i] * vol;
+      }
+   }
+}
+
+void wav_vol2(wave audio, CLI cl)
+{
+   FILE *output;
+   if (cl.output == NULL)
+      output = stdout;
+   else
+      output = fopen("teste.wav", "w");
+
+   fwrite(&audio, 1, 44, output);
+
+   float vol;
+   if (cl.vol == 0)
+      vol = 1;
+   else
+      vol = cl.vol;
+
+   int16_t left;
+   int16_t right;
+   if (audio.channels == 1)
+      for (int i = 0; i <= audio.samplesPC; i++)
+      {
+         right = audio.Right[i] * vol;
+         fwrite(&right, audio.bitsPS / 8, 1, output);
+      }
+   else
+   {
+      for (int i = 0; i <= audio.samplesPC; i++)
+      {
+         left = audio.Left[i] * vol;
+         right = audio.Right[i] * vol;
+         fwrite(&left, audio.bitsPS / 8, 1, output);
+         fwrite(&right, audio.bitsPS / 8, 1, output);
+      }
+   }
+   fclose(output);
 }
 
 int main(int argc, char **argv)
 {
    CLI cl;
-   cl.optam = 0;
+   cl.input = NULL;
+   cl.output = NULL;
+   cl.vol = 0;
    command_line(&cl, argc, argv);
 
    FILE *wav;
@@ -138,7 +188,8 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_info(audio);
-   wav_play(audio, cl);
+   // wav_vol(&audio, cl);
+   // wav_play(audio, cl);
+   wav_vol2(audio, cl);
    fclose(wav);
 }

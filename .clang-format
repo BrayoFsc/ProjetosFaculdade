@@ -21,7 +21,7 @@ AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
@@ -30,7 +30,7 @@ BinPackArguments: true
 BinPackParameters: true
 IndentWidth: 3
 BraceWrapping:
-  AfterClass: false
+  AfterClass: true
   AfterControlStatement: true
   AfterEnum: false
   AfterFunction: true
