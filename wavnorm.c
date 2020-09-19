@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-// command line instructions
-
 void command_line(CLI *cl, int argc, char **argv)
 {
    int option;
@@ -21,8 +19,6 @@ void command_line(CLI *cl, int argc, char **argv)
          case 'o':
             cl->output = optarg;
             break;
-         case 'l':
-            cl->vol = atof(optarg);
          }
       }
 }
@@ -32,7 +28,6 @@ int main(int argc, char **argv)
    CLI cl;
    cl.input = NULL;
    cl.output = NULL;
-   cl.vol = 0;
    command_line(&cl, argc, argv);
 
    FILE *wav;
@@ -52,7 +47,7 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_vol(&audio, cl);
+   wav_norm(&audio);
    wav_play(audio, cl);
    fclose(wav);
 }

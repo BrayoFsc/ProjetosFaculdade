@@ -1,3 +1,4 @@
+
 #include "wav.h"
 #include <inttypes.h>
 #include <stdio.h>
@@ -21,8 +22,6 @@ void command_line(CLI *cl, int argc, char **argv)
          case 'o':
             cl->output = optarg;
             break;
-         case 'l':
-            cl->vol = atof(optarg);
          }
       }
 }
@@ -31,8 +30,6 @@ int main(int argc, char **argv)
 {
    CLI cl;
    cl.input = NULL;
-   cl.output = NULL;
-   cl.vol = 0;
    command_line(&cl, argc, argv);
 
    FILE *wav;
@@ -52,7 +49,6 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_vol(&audio, cl);
-   wav_play(audio, cl);
+   wav_info(audio);
    fclose(wav);
 }
