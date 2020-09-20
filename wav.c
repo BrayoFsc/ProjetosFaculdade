@@ -137,41 +137,107 @@ int16_t clipping(int16_t sample)
    return sample;
 }
 
-/*
-void wav_vol2(wave audio, CLI cl)
+void wav_rev(wave *audio)
 {
-   FILE *output;
-   if (cl.output == NULL)
-      output = stdout;
-   else
-      output = fopen("teste.wav", "w");
-
-   fwrite(&audio, 1, 44, output);
-
-   float vol;
-   if (cl.vol == 0)
-      vol = 1;
-   else
-      vol = cl.vol;
-
-   int16_t left;
-   int16_t right;
-   if (audio.channels == 1)
-      for (int i = 0; i <= audio.samplesPC; i++)
-      {
-         right = audio.Right[i] * vol;
-         fwrite(&right, audio.bitsPS / 8, 1, output);
-      }
-   else
+   if (audio->channels == 1)
    {
-      for (int i = 0; i <= audio.samplesPC; i++)
+      int16_t *rightcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+         rightcpy[i] = audio->Right[i];
+
+      for (int i = 0; i < audio->samplesPC; i++)
+         audio->Right[i] = rightcpy[audio->samplesPC - i];
+
+   } else
+   {
+      int16_t *rightcpy = NULL, *leftcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
       {
-         left = audio.Left[i] * vol;
-         right = audio.Right[i] * vol;
-         fwrite(&left, audio.bitsPS / 8, 1, output);
-         fwrite(&right, audio.bitsPS / 8, 1, output);
+         rightcpy[i] = audio->Right[i];
+         leftcpy[i] = audio->Left[i];
+      }
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+      {
+         audio->Right[i] = rightcpy[audio->samplesPC - i];
+         audio->Left[i] = leftcpy[audio->samplesPC - i];
       }
    }
-   fclose(output);
 }
-*/
+
+void wav_echo(wave *audio, CLI cl)
+{
+   float delay = (float)cl.delay / 1000;
+   int echo = (audio->sampleRate * delay);
+
+   if (audio->channels == 1)
+   {
+      int16_t *rightcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+         rightcpy[i] = audio->Right[i];
+
+      for (int i = echo; i <= audio->samplesPC; i++)
+         audio->Right[i] += cl.vol * rightcpy[i - echo];
+   } else
+   {
+      int16_t *rightcpy = NULL, *leftcpy = NULL;
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+
+      for (int i = 0; i <= audio->samplesPC; i++)
+      {
+         rightcpy[i] = audio->Right[i];
+         leftcpy[i] = audio->Left[i];
+      }
+
+      for (int i = echo; i <= audio->samplesPC; i++)
+      {
+         audio->Right[i] += cl.vol * rightcpy[i - echo];
+         audio->Left[i] += cl.vol * leftcpy[i - echo];
+      }
+   }
+}
+/* void wav_vol2(wave audio, CLI cl)
+ {
+    FILE *output;
+    if (cl.output == NULL)
+       output = stdout;
+    else
+       output = fopen("teste.wav", "w");
+
+    fwrite(&audio, 1, 44, output);
+
+    float vol;
+    if (cl.vol == 0)
+       vol = 1;
+    else
+       vol = cl.vol;
+
+    int16_t left;
+    int16_t right;
+    if (audio.channels == 1)
+       for (int i = 0; i <= audio.samplesPC; i++)
+       {
+          right = audio.Right[i] * vol;
+          fwrite(&right, audio.bitsPS / 8, 1, output);
+       }
+    else
+    {
+       for (int i = 0; i <= audio.samplesPC; i++)
+       {
+          left = audio.Left[i] * vol;
+          right = audio.Right[i] * vol;
+          fwrite(&left, audio.bitsPS / 8, 1, output);
+          fwrite(&right, audio.bitsPS / 8, 1, output);
+       }
+    }
+    fclose(output);
+ }
+ */

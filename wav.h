@@ -8,6 +8,7 @@ typedef struct CLI {
    char *input; // input file defined by -i
    char *output; // output file defined by  -o
    float vol; // adjustment volume
+   int delay;
 } CLI;
 
 typedef struct WAVE {
@@ -42,5 +43,7 @@ void wav_vol(wave *audio, CLI cl);
 void wav_norm(wave *audio);
 int16_t found_max(wave *audio);
 int16_t clipping(int16_t sample);
+void wav_rev(wave *audio);
+void wav_echo(wave *audio, CLI cl);
 
 #endif
