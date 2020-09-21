@@ -47,6 +47,6 @@ int16_t clipping(int16_t sample);
 void wav_rev(wave *audio);
 void wav_echo(wave *audio, CLI cl);
 void wav_wide(wave *audio, float vol);
-void read_cat(wave *audio, FILE *wav, int files)
+void read_cat(wave *audio, FILE *wav, int files);
 
 #endif
