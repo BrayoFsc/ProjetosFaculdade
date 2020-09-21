@@ -21,6 +21,7 @@ void command_line(CLI *cl, int argc, char **argv)
          case 'l':
             cl->vol = atof(optarg);
             break;
+         case 't':
             cl->delay = atoi(optarg) * 1000;
             break;
          }
@@ -32,14 +33,10 @@ int main(int argc, char **argv)
    CLI cl;
    cl.input = NULL;
    cl.output = NULL;
-   cl.vol = 0.5;
-   cl.delay = 1;
+   cl.vol = 1;
    command_line(&cl, argc, argv);
-   if (cl.vol >= 1 || cl.vol <= 0 || cl.delay < 0)
-   {
-      printf("-l must be 0<=l>=1 and -t must be t>=0");
-      exit(1);
-   }
+   if (cl.vol >= 10 || cl.vol < 0)
+      perror("-l must be 0.0<=l>=10.0");
 
    FILE *wav;
    wave audio;
@@ -51,14 +48,11 @@ int main(int argc, char **argv)
       wav = fopen(cl.input, "rd");
 
    if (wav == NULL)
-   {
-      printf("Error opening filen");
-      exit(1);
-   }
+      perror("Error opening filen");
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_echo(&audio, cl);
+   wav_wide(&audio, cl.vol);
    wav_play(audio, cl);
    fclose(wav);
 }

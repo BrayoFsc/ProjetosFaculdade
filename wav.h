@@ -8,7 +8,8 @@ typedef struct CLI {
    char *input; // input file defined by -i
    char *output; // output file defined by  -o
    float vol; // adjustment volume
-   int delay;
+   int delay; // delay on wavecho
+   int files; // number of files in wavcat and wavmix
 } CLI;
 
 typedef struct WAVE {
@@ -45,5 +46,7 @@ int16_t found_max(wave *audio);
 int16_t clipping(int16_t sample);
 void wav_rev(wave *audio);
 void wav_echo(wave *audio, CLI cl);
+void wav_wide(wave *audio, float vol);
+void read_cat(wave *audio, FILE *wav, int files)
 
 #endif

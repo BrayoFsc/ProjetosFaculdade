@@ -6,18 +6,19 @@
 
 void read_audio(wave *audio, FILE *wav)
 {
+   // le os primeiros 44 bytes para o header
    fread(audio, 1, 44, wav);
    audio->samplesPC = (audio->dataChunkSize / audio->channels / (audio->bitsPS / 8));
-
+   // se tiver apenas 1 canal armazena ele no array da direita
    if (audio->channels == 1)
    {
-      audio->Right = (int16_t *)malloc(sizeof(int16_t) * audio->dataChunkSize);
+      audio->Right = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
       fread(audio->Right, audio->bitsPS / 8, audio->samplesPC, wav);
 
    } else
    {
-      audio->Right = (int16_t *)malloc(audio->dataChunkSize);
-      audio->Left = (int16_t *)malloc(audio->dataChunkSize);
+      audio->Right = (int16_t *)malloc(audio->samplesPC);
+      audio->Left = (int16_t *)malloc(audio->samplesPC);
       for (int i = 0; i < audio->samplesPC; i++)
       {
          fread(&audio->Right[i], audio->bitsPS / 8, 1, wav);
@@ -48,15 +49,15 @@ void wav_info(wave audio)
 void wav_play(wave audio, CLI cl)
 {
    FILE *output;
-   if (cl.output == NULL)
+   if (cl.output == NULL) // caso não aja output, a saída vai para o stdout
       output = stdout;
    else
-      output = fopen("teste.wav", "w");
+      output = fopen(cl.output, "w");
 
    fwrite(&audio, 1, 44, output);
-   if (audio.channels == 1)
+   if (audio.channels == 1) // quando tem apenas um canal o fwrite pode ser usando apenas 1 vez
       fwrite(audio.Right, audio.bitsPS / 8, audio.samplesPC, output);
-   else
+   else // já com 2 canais é necessário um for, já que eles foram armazenados em vetores diferentes
    {
       for (int i = 0; i <= audio.samplesPC; i++)
       {
@@ -74,7 +75,7 @@ void wav_vol(wave *audio, CLI cl)
       vol = 1;
    else
       vol = cl.vol;
-
+   // aqui simplismente multiplico o valor da sample pelo volume, com a diferença entre 1 e 2 canais
    if (audio->channels == 1)
       for (int i = 0; i <= audio->samplesPC; i++)
          audio->Right[i] = audio->Right[i] * vol;
@@ -90,14 +91,14 @@ void wav_vol(wave *audio, CLI cl)
 
 void wav_norm(wave *audio)
 {
-   int16_t max;
+   int16_t max; // primeiro preciso encontrar o maior valor absoluto das samples
    max = found_max(audio);
 
    double norm;
-   norm = (float)INT16_MAX / max;
+   norm = (float)INT16_MAX / max; // depois calculo qual a normalização, dividindo o maior valor possível pelo maior sample
    if (audio->channels == 1)
       for (int i = 0; i <= audio->samplesPC; i++)
-         audio->Right[i] = clipping(audio->Right[i] * norm);
+         audio->Right[i] = clipping(audio->Right[i] * norm); // depois multiplico cada valor pela norm e previno o clipping
    else
       for (int i = 0; i <= audio->samplesPC; i++)
       {
@@ -108,10 +109,11 @@ void wav_norm(wave *audio)
 
 int16_t found_max(wave *audio)
 {
+   // simplismente percorro as samples e guardo o maior valor
    int16_t max;
    if (audio->channels == 1)
       for (int i = 0; i <= audio->samplesPC; i++)
-      {
+      { // abs() me garante o maior valor absoluto, seja ele positivo ou negativo
          if (abs(audio->Right[i]) > max)
             max = abs(audio->Right[i]);
       }
@@ -130,6 +132,8 @@ int16_t found_max(wave *audio)
 
 int16_t clipping(int16_t sample)
 {
+   // para previnir o clipping basta ver se a sample passou de INT16_MAX, se passou
+   // eu retorno esse valor, se não passou eu retorno a sample
    if (sample > INT16_MAX)
       return INT16_MAX;
    else if (sample < INT16_MIN)
@@ -139,22 +143,25 @@ int16_t clipping(int16_t sample)
 
 void wav_rev(wave *audio)
 {
+   //[UM CANAL]
    if (audio->channels == 1)
-   {
+   { // primeiro crio um vetor auxiliar do mesmo tamanho do original
       int16_t *rightcpy = NULL;
-      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
-
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
+      // depois eu copio o original nele
       for (int i = 0; i <= audio->samplesPC; i++)
          rightcpy[i] = audio->Right[i];
-
+      // depois simplismente copio a copia invertida
       for (int i = 0; i < audio->samplesPC; i++)
          audio->Right[i] = rightcpy[audio->samplesPC - i];
+      // depois dou free na cópia
+      free(rightcpy);
 
    } else
-   {
+   { // para dois canais o sistema é o mesmo porém duplicado
       int16_t *rightcpy = NULL, *leftcpy = NULL;
-      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
-      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
+      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
 
       for (int i = 0; i <= audio->samplesPC; i++)
       {
@@ -167,29 +174,34 @@ void wav_rev(wave *audio)
          audio->Right[i] = rightcpy[audio->samplesPC - i];
          audio->Left[i] = leftcpy[audio->samplesPC - i];
       }
+      free(rightcpy);
+      free(leftcpy);
    }
 }
 
 void wav_echo(wave *audio, CLI cl)
 {
+   // calculo o delay/echo que está em segundos
    float delay = (float)cl.delay / 1000;
    int echo = (audio->sampleRate * delay);
 
    if (audio->channels == 1)
-   {
+   { // faço uma copia para evitar eco do eco e clipping
       int16_t *rightcpy = NULL;
-      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
-
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
+      // copiando a copia
       for (int i = 0; i <= audio->samplesPC; i++)
          rightcpy[i] = audio->Right[i];
-
+      // para cada amostra eu somo a respectiva com delay da cópia vezes o volume na amostra do canal
       for (int i = echo; i <= audio->samplesPC; i++)
          audio->Right[i] += cl.vol * rightcpy[i - echo];
+      free(rightcpy);
+
    } else
    {
       int16_t *rightcpy = NULL, *leftcpy = NULL;
-      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
-      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->chunkSize);
+      rightcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
+      leftcpy = (int16_t *)malloc(sizeof(int16_t) * audio->samplesPC);
 
       for (int i = 0; i <= audio->samplesPC; i++)
       {
@@ -202,42 +214,54 @@ void wav_echo(wave *audio, CLI cl)
          audio->Right[i] += cl.vol * rightcpy[i - echo];
          audio->Left[i] += cl.vol * leftcpy[i - echo];
       }
+      free(rightcpy);
+      free(leftcpy);
    }
 }
-/* void wav_vol2(wave audio, CLI cl)
- {
-    FILE *output;
-    if (cl.output == NULL)
-       output = stdout;
-    else
-       output = fopen("teste.wav", "w");
 
-    fwrite(&audio, 1, 44, output);
+void wav_wide(wave *audio, float vol)
+{ // verifeicando se o audio tem 2 canais
+   if (audio->channels == 1)
+      perror("audio must have 2 channels");
 
-    float vol;
-    if (cl.vol == 0)
-       vol = 1;
-    else
-       vol = cl.vol;
+   // diminuo uma amostra de aúdio da outra depois somo cada uma com essa diminuição vezes o volume;
+   for (int i = 0; i < audio->samplesPC; i++)
+   {
+      int diff = audio->Right[i] - audio->Left[i];
+      audio->Right[i] += vol * diff;
+      audio->Left[i] += vol * diff;
+   }
+}
 
-    int16_t left;
-    int16_t right;
-    if (audio.channels == 1)
-       for (int i = 0; i <= audio.samplesPC; i++)
-       {
-          right = audio.Right[i] * vol;
-          fwrite(&right, audio.bitsPS / 8, 1, output);
-       }
-    else
-    {
-       for (int i = 0; i <= audio.samplesPC; i++)
-       {
-          left = audio.Left[i] * vol;
-          right = audio.Right[i] * vol;
-          fwrite(&left, audio.bitsPS / 8, 1, output);
-          fwrite(&right, audio.bitsPS / 8, 1, output);
-       }
-    }
-    fclose(output);
- }
- */
+void read_cat(wave *audio, FILE *wav, int files)
+{ // armazeno os dados dos arquivos anteriores, se não tiver nenhum anterior, deve ser 0
+   uint32_t chunkmax = audio->chunkSize;
+   uint32_t datamax = audio->dataChunkSize;
+   uint32_t old_samplePC = audio->samplesPC;
+   fread(audio, 1, 44, wav);
+
+   // leio o header e cálculo o samplesPC que é igual o do arquivo anterior mais o atual
+   audio->samplesPC += (audio->dataChunkSize / audio->channels / (audio->bitsPS / 8));
+
+   if (audio->channels == 1)
+   { // leio o aquivo atual a partir do final do anterior
+      audio->Right = (int16_t *)realloc(audio->Right, audio->samplesPC * sizeof(int16_t));
+
+      for (int i = old_samplePC; i <= audio->samplesPC; i++)
+         fread(&audio->Right[i], audio->bitsPS / 8, 1, wav);
+
+   } else
+   {
+      audio->Right = (int16_t *)realloc(audio->Right, audio->samplesPC * sizeof(int16_t));
+      audio->Left = (int16_t *)realloc(audio->Left, audio->samplesPC * sizeof(int16_t));
+
+      for (int i = old_samplePC; i <= audio->samplesPC; i++)
+      {
+         fread(&audio->Right[i], audio->bitsPS / 8, 1, wav);
+         fread(&audio->Left[i], audio->bitsPS / 8, 1, wav);
+      }
+   }
+   // somo os arquivos guardados no arquivo atual
+   audio->chunkSize += chunkmax;
+   audio->dataChunkSize += datamax;
+}

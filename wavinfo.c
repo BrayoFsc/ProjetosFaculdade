@@ -4,24 +4,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+// command line instructions
+
 void command_line(CLI *cl, int argc, char **argv)
 {
    int option;
    if (argc > 1)
-      while ((option = getopt(argc, argv, "i:o:l:t:")) != -1)
+      while ((option = getopt(argc, argv, "i:o:l:")) != -1)
       {
          switch (option)
          {
          case 'i':
             cl->input = optarg;
             break;
+
          case 'o':
             cl->output = optarg;
-            break;
-         case 'l':
-            cl->vol = atof(optarg);
-            break;
-            cl->delay = atoi(optarg) * 1000;
             break;
          }
       }
@@ -31,15 +29,7 @@ int main(int argc, char **argv)
 {
    CLI cl;
    cl.input = NULL;
-   cl.output = NULL;
-   cl.vol = 0.5;
-   cl.delay = 1;
    command_line(&cl, argc, argv);
-   if (cl.vol >= 1 || cl.vol <= 0 || cl.delay < 0)
-   {
-      printf("-l must be 0<=l>=1 and -t must be t>=0");
-      exit(1);
-   }
 
    FILE *wav;
    wave audio;
@@ -58,7 +48,6 @@ int main(int argc, char **argv)
 
    // reading file data into the struct
    read_audio(&audio, wav);
-   wav_echo(&audio, cl);
-   wav_play(audio, cl);
+   wav_info(audio);
    fclose(wav);
 }
