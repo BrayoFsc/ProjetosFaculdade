@@ -20,20 +20,6 @@ void command_line(CLI *cl, int argc, char **argv)
    }
 }
 
-uint32_t greater(uint32_t a, uint32_t b)
-{
-   switch (a > b)
-   {
-   case 1:
-      return a;
-      break;
-   case 2:
-      return b;
-      break;
-   }
-   return a;
-}
-
 void read_mix(wave *audio, FILE *wav)
 { // armazeno os dados dos arquivos anteriores, se não tiver nenhum anterior, deve ser 0
    uint32_t chunkmax = audio->chunkSize;
